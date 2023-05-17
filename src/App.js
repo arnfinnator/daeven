@@ -50,9 +50,10 @@ function App() {
       <div className="App">
         <header>
           <h1>Sorting Algorithims</h1>
-          <p>The subtitle goes here</p>
-          <address class="author">
-            <a rel="author">Arnfinn Larsen</a>
+          <p>A quick dive into algoritms</p>
+
+          <address className="author">
+            By <a rel="author">Arnfinn Larsen</a>
           </address>
         </header>
 
@@ -76,9 +77,9 @@ function App() {
           and implementation complexity. Some of the most common sorting
           algorithms used in computer science include:
           <ul>
-            {algorithmDescriptions.map((item) => {
+            {algorithmDescriptions.map((item, key) => {
               return (
-                <li>
+                <li key={key}>
                   <ListCard text={item.description}></ListCard>
                 </li>
               );

@@ -24,7 +24,7 @@ const ListCard = (props) => {
           }}
           href="#sortingExample"
         >
-          <span class="material-symbols-outlined">keyboard_arrow_down</span>
+          <span className="material-symbols-outlined">keyboard_arrow_down</span>
         </a>
       </div>
     </>
