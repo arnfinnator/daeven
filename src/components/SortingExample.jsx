@@ -1,7 +1,6 @@
 const SortingExample = (props) => {
   var title = "Bubble sort";
 
-
   function swap(arr, xp, yp) {
     var temp = arr[xp];
     arr[xp] = arr[yp];
@@ -31,7 +30,7 @@ const SortingExample = (props) => {
       <div>
         <h3>{title}</h3>
       </div>
-      <div style={{ height: "100vh" }}>Example container</div>
+      <div style={{ height: "100vh" }}>{numbers}</div>
     </>
   );
 };

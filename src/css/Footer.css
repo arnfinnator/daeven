@@ -1,0 +1,9 @@
+.footer {
+  display: flex;
+  background-color: rgba(0, 0, 0, 0.2);
+  margin-bottom: 0;
+  padding: 24px;
+}
+.footer > div {
+  width: 50%;
+}
