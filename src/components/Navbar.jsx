@@ -20,6 +20,9 @@ const Navbar = (props) => {
         <div className="navbar item">
           <a href="/seasnake">seasnake</a>
         </div>
+        <div className="navbar item">
+          <a href="/pokedex">Pokedex</a>
+        </div>
       </div>
     </>
   );

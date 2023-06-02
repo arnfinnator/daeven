@@ -1,112 +1,114 @@
-
 import React, { useEffect, useState, useRef } from "react";
-import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
-import L from 'leaflet';
+import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from "react-leaflet";
+import L from "leaflet";
 import "leaflet-rotatedmarker";
 
 import "./css/Map.css";
 
-
-
 function MyMap() {
-
-  const altaPosition = [70.00, 23.25]
+  const altaPosition = [70.0, 23.25];
   const zoomLevel = 12;
-  const [position, setPosition] = useState([70.00, 23.25]);
+  const [position, setPosition] = useState(altaPosition);
   const [angle, setAngle] = useState(0);
-  const [speed, setSpeed] = useState(0);
+  const [speed, setSpeed] = useState(0.0005);
+  const [mouseCoords, setMouseCoords] = useState({});
+  const [cursorPosition, setCursorPosition] = useState([0, 0]);
+  const [bearing, setBearing] = useState(0);
+  const [isPaused, setIsPaused] = useState(true);
 
   const markerRef = useRef(null);
   const mapRef = useRef();
 
-
-  function handleSetView(coordinates) {
-    mapRef.current.setView(coordinates);
-  }
-
-
   const arrowIconSvg = `
-  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-    <path d="M16 2L2 30 16 20 30 30z" fill="#000" />
-  </svg>
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+      <path d="M16 2L2 30 16 20 30 30z" fill="#000" />
+    </svg>
   `;
-
   const arrowIcon = L.divIcon({
-    className: 'arrow-icon',
+    className: "arrow-icon",
     html: arrowIconSvg,
     iconSize: [32, 32],
   });
-  useEffect(() => {
-    const marker = markerRef.current;
-    const handleMouseMove = (e) => {
-      const marker = markerRef.current;
 
-      if (marker) {
-        const containerPoint = mapRef.current.mouseEventToContainerPoint(e);
-        const latLng = mapRef.current.containerPointToLatLng(containerPoint);
+  const calculateBearing = (startLat, startLng, endLat, endLng) => {
+    //only set bearing if cursor is far enough away as.
 
-        marker.setLatLng(latLng);
-        marker.update();
-        setPosition([latLng.lat, latLng.lng]);
-      }
-    };
+    const startLatRad = startLat * (Math.PI / 180);
+    const startLngRad = startLng * (Math.PI / 180);
+    const endLatRad = endLat * (Math.PI / 180);
+    const endLngRad = endLng * (Math.PI / 180);
 
-    
-    if (marker) {
-      marker.setIcon(arrowIcon);
-      marker.setRotationOrigin("center")
-    }
+    const y = Math.sin(endLngRad - startLngRad) * Math.cos(endLatRad);
+    const x =
+      Math.cos(startLatRad) * Math.sin(endLatRad) -
+      Math.sin(startLatRad) * Math.cos(endLatRad) * Math.cos(endLngRad - startLngRad);
 
-    const handleKeyDown = (e) => {
-      const marker = markerRef.current;
-      if (!marker)
-        return;
-
-      switch (e.code) {
-        case 'KeyW':
-          setSpeed(speed + 5);
-          break;
-        case 'KeyS':
-          setSpeed(speed - 5);
-          break;
-        case 'KeyA':
-          if (angle <= 0)
-            setAngle(360);
-          else
-            setAngle(angle - 5)
-          break;
-        case 'KeyD':
-          if (angle >= 360)
-            setAngle(5);
-          else
-            setAngle(angle + 5)
-          break;
-        default:
-          return;
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [angle]);
-
+    let bearing = Math.atan2(y, x) * (180 / Math.PI);
+    bearing = (bearing + 360) % 360; // Convert to 0-360 degrees range
+    return bearing;
+  };
 
   const moveForward = () => {
     const marker = markerRef.current;
-    const latlng = marker.getLatLng();
+    if (!marker)
+      return;
 
-    const distance = 0.0001; // Distance to move forward
-    marker.setRotationAngle(angle);
+    const latlng = marker.getLatLng();
+    // const bearing = calculateBearing(latlng.lat, latlng.lng, targetPosition[0], targetPosition[1]);
+
+    marker.setRotationAngle(bearing);
+    const distance = speed; // Distance to move forward
 
     const newLatLng = [
-      latlng.lat + distance * Math.cos(angle * Math.PI / 180),
-      latlng.lng + distance * Math.sin(angle * Math.PI / 180) * 2
+      latlng.lat + distance * Math.cos(bearing * (Math.PI / 180)) / 2,
+      latlng.lng + distance * Math.sin(bearing * (Math.PI / 180)),
     ];
 
     marker.setLatLng(newLatLng);
-    marker.update();
-    handleSetView(newLatLng);
+    setPosition(newLatLng);
+  };
+
+  function ChangeView({ center, zoom }) {
+    const map = useMap();
+    map.setView(center, zoom);
+    return null;
+  }
+  function PauseOverlay({ isPaused }) {
+    if (!isPaused)
+      return;
+    return (
+      <>
+        <div style={{ position: "absolute", top: "0", left: "0", width: "100%", height: "100%", zIndex: "999", backgroundColor: "rgba(255,255,255,0,2)" }}></div>
+      </>
+    );
+  }
+  const handleKeyPress = (e) => {
+    console.log(e.code);
+    switch (e.code) {
+      case "Space":
+        setIsPaused(!isPaused);
+        break;
+      default:
+        return;
+    }
+  }
+
+  useEffect(() => {
+    window.document.addEventListener('keydown', handleKeyPress);
+  }, [isPaused]);
+
+  const handleMouseMove = (e) => {
+    const targetLatLng = mapRef.current.mouseEventToLatLng(e.originalEvent);
+    console.log(targetLatLng);
+  };
+  const MapEvents = () => {
+    useMapEvents({
+      mousemove(e) {
+        setBearing(calculateBearing(position[0], position[1], cursorPosition[0], cursorPosition[1]));
+        setCursorPosition([e.latlng.lat, e.latlng.lng]);
+      },
+    });
+    return false;
   }
 
   useEffect(() => {
@@ -115,7 +117,9 @@ function MyMap() {
     const frameDelay = 1000 / frameRate; // Delay between each frame in milliseconds
 
     const animate = () => {
-      moveForward();
+      if (!isPaused) {
+        moveForward(cursorPosition);
+      }
       animationFrameId = requestAnimationFrame(animate);
     };
     animationFrameId = requestAnimationFrame(animate);
@@ -123,21 +127,30 @@ function MyMap() {
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
-  }, [angle]);
+  }, [speed, cursorPosition, position, isPaused]);
 
+  // useEffect(() => {
+
+  // }, [])
 
   return (
-    <MapContainer
-      ref={mapRef}
-      center={position}
-      zoom={zoomLevel}
-      style={{ height: "100vh", width: "100%" }}
-    >
-      <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      <Marker position={position} ref={markerRef} />
-    </MapContainer>
+    <>
+      <div>
+        x:{cursorPosition[0].toFixed(4)}  y:{cursorPosition[1].toFixed(4)} | {bearing.toFixed(0)}° | zoom: {zoomLevel}
+      </div>
+      <MapContainer
+        ref={mapRef}
+        center={position}
+        zoom={zoomLevel}
+        style={{height: "100%"}}
+        onMouseMove={handleMouseMove}
+      >
+        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        <MapEvents />
+        <ChangeView center={position} zoom={zoomLevel} />
+        <Marker position={position} ref={markerRef} />
+      </MapContainer>
+    </>
   );
 }
 

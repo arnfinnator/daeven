@@ -5,10 +5,17 @@ body {
   line-height: 1.5;
   margin: 0;
 }
+
 img,
 svg,
 video {
   max-width: 100%;
+  display: block;
+  margin: auto;
+}
+
+.heroImages {
+  min-width: 100%;
   display: block;
   margin: auto;
 }
@@ -18,14 +25,10 @@ video {
   margin-inline: auto;
 }
 
-header,
-section {
-  margin: 24px 0;
-}
-
 h1 {
   margin: 15px 0 10px 0;
 }
+
 p {
   margin: 0;
   padding: 0;
@@ -38,11 +41,11 @@ html {
   background: rgb(48, 47, 46);
   color: rgb(207, 197, 186);
 }
+
 @media (prefers-color-scheme: dark) {
-  html {
-  }
+  html {}
 }
+
 @media (prefers-color-scheme: light) {
-  html {
-  }
+  html {}
 }
