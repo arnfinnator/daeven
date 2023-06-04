@@ -7,6 +7,15 @@ import Footer from "./components/Footer";
 import SeaSnake from "./SeaSnake/SeaSnake";
 import LandingPage from "./views/LandingPage"
 import Pokedex from "./Pokedex/index"
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+
+const darkTheme = createTheme({
+  palette: {
+    mode: 'dark',
+  },
+});
+
 
 const router = createBrowserRouter([
   {
@@ -30,10 +39,16 @@ const router = createBrowserRouter([
     }]
   },
 ]);
+
+
+// https://mui.com/material-ui/customization/dark-mode/
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <Navbar></Navbar>
-    <RouterProvider router={router} />
-    {/* <Footer ></Footer> */}
-  </React.StrictMode>
+  <ThemeProvider theme={darkTheme}>
+    <CssBaseline />
+    <React.StrictMode>
+      <Navbar></Navbar>
+      <RouterProvider router={router} />
+      {/* <Footer ></Footer> */}
+    </React.StrictMode>
+  </ThemeProvider>
 );
