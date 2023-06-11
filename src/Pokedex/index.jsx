@@ -9,7 +9,7 @@ import Divider from '@mui/material/Divider';
 
 
 //Map
-import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, useMap, useMapEvents, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet-rotatedmarker";
 
@@ -24,6 +24,10 @@ import ListItemText from '@mui/material/ListItemText';
 import InboxIcon from '@mui/icons-material/Inbox';
 import DraftsIcon from '@mui/icons-material/Drafts';
 
+import MenuIcon from '@mui/icons-material/Menu';
+import CloseIcon from '@mui/icons-material/Close';
+import CatchingPokemonIcon from '@mui/icons-material/CatchingPokemon';
+import FlareIcon from '@mui/icons-material/Flare';
 
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
@@ -32,9 +36,46 @@ import TabList from '@mui/lab/TabList';
 import TabPanel from '@mui/lab/TabPanel';
 
 
-
+import ChatRoom from "./ChatRoom"
 
 import "./css/Pokedex.css"
+
+const locations = [
+    {
+        type: 1, name: "Alta Kirke", coords: { lat: 70.22, lng: 22.01 },
+        lat: 69.96511261967144,
+        lng: 23.2667738199234,
+        latLng: [70.22, 22.01]
+    },
+    {
+        type: 0, name: "22 Juli Minnestein", coords: { lat: 70.22, lng: 22.01 },
+        lat: 69.96599291120057,
+        lng: 23.27048599720001,
+        latLng: [70.22, 22.05]
+    },
+    {
+        type: 0, name: "Steinkarn", coords: { lat: 70.22, lng: 22.01 },
+        lat
+            :
+            69.96667102280772,
+        lng
+            :
+            23.2735008001327,
+        latLng: [70.23, 22.01]
+    },
+    {
+        type: 0, name: "Buss for tog", coords: { lat: 70.22, lng: 22.01 },
+        lat
+            :
+            69.96438299712129,
+        lng
+            :
+            23.27325940132141,
+        latLng: [70.21, 22.21]
+    },
+]
+
+
 
 function findPokemon(id) {
     if (!id)
@@ -82,9 +123,7 @@ const PokemonSelect = (props) => {
     )
 }
 
-
 const AddMarker = (props) => {
-
     const map = useMapEvents({
         click: handleAddMarker
     })
@@ -106,19 +145,22 @@ const AddMarker = (props) => {
             newMarker.on("click", () => {
 
             })
-
             newMarker.bindPopup(
                 "hello world"
             );
-
             newMarker.addTo(map);
             props.handleMarkerAdded();
+
+            console.log(newMarker);
         }
     }
 
 }
 const MapSidebar = (props) => {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [mapWidth, setMapWidth] = useState(361);
+
+
 
     function handleClose() {
         console.log("close")
@@ -145,35 +187,61 @@ const MapSidebar = (props) => {
             >
                 <List>
                     <ListItem disablePadding>
-                        <ListItemButton>
-                            <ListItemIcon>
-                                <InboxIcon />
-                            </ListItemIcon>
-                            <ListItemText primary="Inbox" />
-                        </ListItemButton>
-                    </ListItem>
-                    <ListItem disablePadding>
-                        <ListItemButton>
-                            <ListItemIcon>
-                                <DraftsIcon />
-                            </ListItemIcon>
-                            <ListItemText primary="Drafts" />
-                        </ListItemButton>
-                    </ListItem>
-                    <Divider />
-                    <ListItem disablePadding>
                         <ListItemButton onClick={handleClose}>
+                            <ListItemText primary="Sites" style={mapWidth > 360 ? { width: "140px" } : { width: "100%" }} />
                             <ListItemIcon>
-                                <InboxIcon></InboxIcon>
+                                <CloseIcon></CloseIcon>
                             </ListItemIcon>
-                            <ListItemText primary="Close" />
                         </ListItemButton>
                     </ListItem>
+
+                    <Divider />
+
+                    {locations.map((item, index) => {
+                        return (
+                            <ListItem disablePadding key={index}>
+                                <ListItemButton onClick={() => { props.panTo(item.lat, item.lng) }}>
+                                    <ListItemIcon>
+                                        <CatchingPokemonIcon />
+                                    </ListItemIcon>
+                                    <ListItemText primary={item.name} />
+                                </ListItemButton>
+                            </ListItem>
+                        )
+                    })}
                 </List>
             </Drawer>
+
+            <MenuIcon style={{ position: "absolute", top: "12px", left: "12px", zIndex: "999", color: "black" }}
+                onClick={() => { setIsSidebarOpen(true) }}
+            >Open</MenuIcon>
+
         </>
     )
 }
+
+
+const UserMarker = (props) => {
+    const map = useMapEvents();
+    var userMarker = new L.marker([props.userPosition.coords.lat, props.userPosition.coords.lng], { draggable: 'true' });
+    userMarker.addTo(map);
+}
+
+// const LocationMarkers = (props) => {
+//     props.locations.map((item, index) => {
+//         console.log(item);
+//         return (
+//             <Marker key={index} position={[item.lat, item.lng]}>
+//                 <Popup>Hello World!</Popup>
+//             </Marker>
+//         );
+//     })
+// }
+
+// const LocationMarkersFilteredByGeoLocation = (props) => {
+
+// }
+
 
 const Pokedex = () => {
     const params = useParams();
@@ -191,6 +259,7 @@ const Pokedex = () => {
     //pokemap
     const mapRef = useRef(null);
     const markerRef = useRef(null);
+    const userMarkerRef = useRef(null);
     const [position, setPosition] = useState([69.96636432125193, 23.272927898342715]);
     const [zoomLevel, setZoomLevel] = useState(20);
     const [userPosition, setUserPosition] = useState({});
@@ -198,6 +267,8 @@ const Pokedex = () => {
     const [personalMarkers, setPersonalMarkers] = useState([]);
     const [isAddingMarker, setIsAddingMarker] = useState(false);
     const [isMapSidebarHidden, setIsMapSidebarHidden] = useState(true);
+    const [mapWidth, setMapWidth] = useState(null)
+
 
     function handleUserPositionSuccess(geoLocationPositionCoordinates) {
         setUserPosition(geoLocationPositionCoordinates);
@@ -214,11 +285,19 @@ const Pokedex = () => {
     function handlePokemonChange(pokemon) {
         setPokemon(pokemon);
     }
+    function handlePanTo(lat, lng) {
+        mapRef.current?.panTo(new L.latLng(lat, lng));
+    }
+
+
+
     useEffect(() => {
+        //initial load
         if (!isLoaded) {
             if (params.id) {
                 setPokemon(findPokemon(params.id));
             }
+
             navigator.geolocation.getCurrentPosition(handleUserPositionSuccess, handleUserPositionError);
             setIsLoaded(true);
         }
@@ -234,6 +313,7 @@ const Pokedex = () => {
                                 <Tab label="Map" value="1" />
                                 <Tab label="Messages" value="2" />
                                 <Tab label="Announcements" value="3" />
+                                <Tab style={{ margin: "0 0 0 auto" }} label="Profile" value="4" />
                             </TabList>
                         </Box>
                         {/* Create own component for each tab */}
@@ -246,14 +326,19 @@ const Pokedex = () => {
                                     style={{ height: "100%", position: "relative" }}
                                     zoomControl={false}
                                     attributionControl={false}
-
                                 >
+                                    {
+                                        locations.map((item, index) => {
+                                            return (
+                                                <Marker key={index} position={[item.lat, item.lng]}>
+                                                    <Popup>Hello World</Popup>
+                                                </Marker>
+                                            )
+                                        })
+                                    }
                                     <AddMarker isAddingMarker={isAddingMarker} handleMarkerAdded={handleMarkerAdded} />
                                     <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-
-
-                                    <MapSidebar isHidden={isMapSidebarHidden}></MapSidebar>
-                                    {/* <Marker position={position} ref={markerRef} /> */}
+                                    <MapSidebar isHidden={isMapSidebarHidden} mapWidth={mapWidth} panTo={handlePanTo}></MapSidebar>
                                 </MapContainer>
 
                                 <Stack spacing={2} padding={"12px 0px"} direction="row" height="80px">
@@ -267,14 +352,12 @@ const Pokedex = () => {
                                     <Button fullWidth color={isAddingMarker ? 'success' : 'primary'} variant="outlined" onClick={() => { setIsAddingMarker(!isAddingMarker) }}>Add Pokestop</Button>
                                     <Button fullWidth variant="outlined">Fourth </Button>
                                 </Stack>
-
-                                {/* <hr style={{ margin: "24px 0" }}></hr>
-                    <PokemonSelect handlePokemonChange={handlePokemonChange} ></PokemonSelect>
-                    <PokemonInfo pokemon={pokemon}></PokemonInfo> */}
                             </div>
 
                         </TabPanel>
-                        <TabPanel value="2">Item Two</TabPanel>
+                        <TabPanel value="2">
+                            <ChatRoom roomId={"alta"}></ChatRoom>
+                        </TabPanel>
                         <TabPanel value="3">Item Three</TabPanel>
                     </TabContext>
                 </Box>
