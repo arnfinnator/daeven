@@ -194,9 +194,7 @@ const MapSidebar = (props) => {
                             </ListItemIcon>
                         </ListItemButton>
                     </ListItem>
-
                     <Divider />
-
                     {locations.map((item, index) => {
                         return (
                             <ListItem disablePadding key={index}>
